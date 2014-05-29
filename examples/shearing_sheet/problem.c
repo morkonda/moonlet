@@ -63,8 +63,6 @@ double coefficient_of_restitution_bridges(double v);
 bool check(double x, double y);
 void problem_start();
 extern double opening_angle2;
-int ab;
-//ab = remove("position_moonlet.txt");
 
 void problem_init(int argc, char* argv[])
 {
