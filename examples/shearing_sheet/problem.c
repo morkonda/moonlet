@@ -61,14 +61,22 @@ extern double minimum_collision_velocity;
 extern double (*coefficient_of_restitution_for_velocity)(double); 
 double coefficient_of_restitution_bridges(double v);
 bool check(double x, double y);
-void problem_start();
+bool check_to_add();
 extern double opening_angle2;
+
+//bool check_to_add()
+//{
+  //remove("position_moonlet.txt");
+//FILE * fp_temp = fopen("position.txt", "r");
+//}
 
 void problem_init(int argc, char* argv[])
 {
-	FILE *fp_moonlet;
-	fp_moonlet = fopen("position_moonlet.txt", "a+");
-	fclose(fp_moonlet);
+	remove("position_moonlet.txt");
+	printf("test");
+	//FILE *fp_moonlet;
+	//fp_moonlet = fopen("position_moonlet.txt", "a");
+	//fclose(fp_moonlet);
         for(int i=0; i<argc;i++)
 	{
 		printf("%d\t%s\n",i,argv[i]);
@@ -103,7 +111,7 @@ void problem_init(int argc, char* argv[])
 	double particle_radius_slope 	= -3;	
 	//double increment = input_get_double(argc,argv,"increment",1.1);
 ///	printf("%f\n",input_get_double(argc,argv,"a",123));
-	double increment 		= 0.5;
+	double increment 		= 1.9;
 	boxsize 			= 100.*increment;	// m
 ///	if (argc>1){						//Try to read boxsize from command line
 	//	boxsize = atof(argv[1]);
@@ -236,6 +244,7 @@ bool check(double x, double y)
 }
 	struct particle pt;
 	pt.x				= 0;
+	//pt.x 				= (1./3.)*(x_left_1);
 	pt.y				= tools_normal(1.);
 	pt.z				= tools_normal(1.);
 	pt.vx				= 0;
@@ -244,7 +253,7 @@ bool check(double x, double y)
 	pt.ax				= 0;
 	pt.ay				= 0;
 	pt.az				= 0;
-	double radius 			= 10.;
+	double radius 			= 100.;
 	pt.r 				= radius;
 	double particle_mass 		= particle_density*4./3.*M_PI*radius*radius*radius;
 	pt.m				= particle_mass;
@@ -270,8 +279,6 @@ void problem_inloop()
 
 void problem_output()
 {
-	FILE *fp_moonlet_data;
-	fp_moonlet_data = fopen("position_moonlet.txt", "r+");
 	if (output_check(1e-3*2.*M_PI/OMEGA))
 	{
 		output_timing();
@@ -282,24 +289,24 @@ void problem_output()
 		char fp_position_data[1024];
 		sprintf(fp_position_data,"position_%2.1f.txt",t/(2.*M_PI/OMEGA));
 		output_ascii(fp_position_data);
+
 	}
+
 	if (output_check(2.*M_PI/OMEGA))
 	{
-		//fp_moonlet_data = fopen("position_moonlet.txt", "a+");
+		FILE* fp_moonlet_data = fopen("position_moonlet.txt","a+");
 		for(int i=0;i<number_of_particles;i++)
 		 {
-			if (particles[i].r == 10.)
+			if (particles[i].r == 100.)
 		         { 
 		     		struct particle ml = particles[i];
 				fprintf(fp_moonlet_data,"%e\t%e\t%e\t%e\t%e\t%e\n", ml.x, ml.y, ml.z, ml.vx, ml.vy, ml.vz);
+				fclose(fp_moonlet_data);
 			 }
 		 }
-		//fclose(fp_moonlet_data);
 	}
-	fclose(fp_moonlet_data);
 }
 
 void problem_finish()
 {
 }
-
