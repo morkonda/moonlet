@@ -222,68 +222,178 @@ bool check(double x, double y)
 
 double result_left_1(double x)
 {
-	double lower_limit = -1.*-boxsize_x/2.;
-	double upper_limit = -1.*-2.5*r_h;
+	double lower_limit = -boxsize_x/2.;
+	double upper_limit = -2.5*r_h;
 	double constant_neg_mdr = -3.*n_0*r_h*r_h*((64.*pow(G*moonlet_mass,2.)*a)/(243.*pow(OMEGA,3.)))*(pow(((2.*K_0)+(K_1)),2.));
 	
+//x_left_1 is to the right of (-2.5*r_h)
 	if(upper_limit <= x_left_1)
 	 {
-		double upper_value = ((-1/(3.*pow(upper_limit,3)))-(alpha/(2.*a*pow(upper_limit,2))));
-		double lower_value = ((-1/(3.*pow(lower_limit,3)))-(alpha/(2.*a*pow(lower_limit,2))));
+		double upper_value = ((-1/(3.*pow(-upper_limit,3)))-(alpha/(2.*a*pow(-upper_limit,2))));
+		double lower_value = ((-1/(3.*pow(-lower_limit,3)))-(alpha/(2.*a*pow(-lower_limit,2))));
 		return constant_neg_mdr*surface_density_upper*(upper_value - lower_value);
 	 }
 	
-	else
+//x_left_1 is to the left of (-2.5*r_h) and x_left_2 is to the right of (-2.5*r_h)
+	else if(upper_limit > x_left_1 && upper_limit < x_left_2) 
 	 {
-		double middle_limit = -1.*x_left_1;
-		double upper_value_1 = ((-1/(3.*pow(middle_limit,3)))-(alpha/(2.*a*pow(middle_limit,2))));
-		double lower_value_1 = ((-1/(3.*pow(lower_limit,3)))-(alpha/(2.*a*pow(lower_limit,2))));
+		double middle_limit = x_left_1;
+		double upper_value_1 = ((-1/(3.*pow(-middle_limit,3)))-(alpha/(2.*a*pow(-middle_limit,2))));
+		double lower_value_1 = ((-1/(3.*pow(-lower_limit,3)))-(alpha/(2.*a*pow(-lower_limit,2))));
 		double temp_result_1 = constant_neg_mdr*surface_density_upper*(upper_value_1-lower_value_1);
 
-		double upper_value_2 = (-((slope_left*r_h)/(2.*pow(upper_limit,2)))-((surface_density_upper-(slope_left*x_left_1))/(3.*pow(upper_limit,3)))-((alpha*(slope_left*r_h))/(a*upper_limit))-((alpha*(surface_density_upper-(slope_left*x_left_1)))/(2.*a*pow(upper_limit,2))));
-		double lower_value_2 = (-((slope_left*r_h)/(2.*pow(middle_limit,2)))-((surface_density_upper-(slope_left*x_left_1))/(3.*pow(middle_limit,3)))-((alpha*(slope_left*r_h))/(a*middle_limit))-((alpha*(surface_density_upper-(slope_left*x_left_1)))/(2.*a*pow(middle_limit,2))));
+		double upper_value_2 = (-((slope_left*r_h)/(2.*pow(-upper_limit,2)))-((surface_density_upper-(slope_left*x_left_1))/(3.*pow(-upper_limit,3)))-((alpha*(slope_left*r_h))/(a*-upper_limit))-((alpha*(surface_density_upper-(slope_left*x_left_1)))/(2.*a*pow(-upper_limit,2))));
+		double lower_value_2 = (-((slope_left*r_h)/(2.*pow(-middle_limit,2)))-((surface_density_upper-(slope_left*x_left_1))/(3.*pow(-middle_limit,3)))-((alpha*(slope_left*r_h))/(a*-middle_limit))-((alpha*(surface_density_upper-(slope_left*x_left_1)))/(2.*a*pow(-middle_limit,2))));
 		double temp_result_2 = constant_neg_mdr*(upper_value_2-lower_value_2);
 
 		return temp_result_1 + temp_result_2;
 	 }
 	
+//x_left_1 and x_left_2 are to the left of (-2.5*r_h)
+	else if(upper_limit > x_left_2)
+	 {
+		double middle_limit_1 = x_left_1;
+		double upper_value_1 = ((-1/(3.*pow(-middle_limit_1,3)))-(alpha/(2.*a*pow(-middle_limit_1,2))));
+		double lower_value_1 = ((-1/(3.*pow(-lower_limit,3)))-(alpha/(2.*a*pow(-lower_limit,2))));
+		double temp_result_1 = constant_neg_mdr*surface_density_upper*(upper_value_1-lower_value_1);
+
+		double middle_limit_2 = x_left_2;
+		double upper_value_2 = (-((slope_left*r_h)/(2.*pow(-middle_limit_2,2)))-((surface_density_upper-(slope_left*x_left_1))/(3.*pow(-middle_limit_2,3)))-((alpha*(slope_left*r_h))/(a*-middle_limit_2))-((alpha*(surface_density_upper-(slope_left*x_left_1)))/(2.*a*pow(-middle_left_2,2))));
+		double lower_value_2 = (-((slope_left*r_h)/(2.*pow(-middle_limit_1,2)))-((surface_density_upper-(slope_left*x_left_1))/(3.*pow(-middle_limit_1,3)))-((alpha*(slope_left*r_h))/(a*-middle_limit_1))-((alpha*(surface_density_upper-(slope_left*x_left_1)))/(2.*a*pow(-middle_left_1,2))));
+		double temp_result_2 = constant_neg_mdr*(upper_value_2-lower_value_2);
+
+		double upper_value_3 = ((-1/(3.*pow(-upper_limit,3)))-(alpha/(2.*a*pow(-upper_limit,2))));
+		double lower_value_3 = ((-1/(3.*pow(-middle_limit_2,3)))-(alpha/(2.*a*pow(-middle_limit_2,2))));
+		double temp_result_3 = constant_neg_mdr*surface_density_lower*(upper_value_3-lower_value_3);
+
+		return temp_result_1 + temp_result_2 + temp_result_3;
+	}
 }
 
 double result_left_2(double x)
 {
-	double lower_limit = -1.*-2.5*r_h;
-	double upper_limit = -1.*-1.8*r_h;
+	double lower_limit = -2.5*r_h;
+	double upper_limit = -1.8*r_h;
 	double constant_neg_cdr = -3.*n_0*r_h*r_h*(r_h/(2.*a))*J_m;
 	
+//x_left_1 is to the right of (-1.8*r_h)
 	if(upper_limit <= x_left_1)
 	 {
-		double upper_value = (1./3.)*pow(upper_limit,3);
-		double lower_value = (1./3.)*pow(lower_limit,3);
+		double upper_value = (1./3.)*pow(-upper_limit,3);
+		double lower_value = (1./3.)*pow(-lower_limit,3);
 		return constant_neg_cdr*surface_density_upper*(upper_value-lower_value);
 	 }
 
-	else
+//x_left_1 is in between (-2.5*r_h) and (-1.8*r_h) and x_left_2 is to the right of (1.8*r_h)
+	else if(lower_limit < x_left_1 && upper_limit < x_left_2)
 	 {
-		double middle_limit = -1.*x_left_1;
-		double upper_value_1 = (1./3.)*pow(middle_limit,3);
-		double lower_value_1 = (1./3.)*pow(lower_limit,3);
-		double temp_result_1 = constant_neg*cdr*surface_density_upper*(upper_value_1-lower_value_1);
+		double middle_limit = x_left_1;
+		double upper_value_1 = (1./3.)*pow(-middle_limit,3);
+		double lower_value_1 = (1./3.)*pow(-lower_limit,3);
+		double temp_result_1 = constant_neg_cdr*surface_density_upper*(upper_value_1-lower_value_1);
 
-		double upper_value_2 = (((slope_left*r_h*pow(upper_limit,4))/4.)+(((surface_density_upper-(slope_left*x_left_1))*pow(upper_limit,3))/3.));
-		double lower_value_2 = (((slope_left*r_h*pow(middle_limit,4))/4.)+(((surface_density_upper-(slope_left*x_left_1))*pow(middle_limit,3))/3.));
+		double upper_value_2 = (((slope_left*r_h*pow(-upper_limit,4))/4.)+(((surface_density_upper-(slope_left*x_left_1))*pow(-upper_limit,3))/3.));
+		double lower_value_2 = (((slope_left*r_h*pow(-middle_limit,4))/4.)+(((surface_density_upper-(slope_left*x_left_1))*pow(-middle_limit,3))/3.));
 		double temp_result_2 = constant_neg_cdr*(upper_value_2-lower_value_2);
 
 		return temp_result_1 + temp_result_2;
 	 }
+
+//x_left_1 and x_left_2 are in between (-2.5*r_h) and (-1.8*r_h)
+	else if(lower_limit < x_left_1 && upper_limit < x_left_2)
+	 {
+		double middle_limit_1 = x_left_1;
+		double upper_value_1 = (1./3.)*pow(-middle_limit_1,3);
+		double lower_value_1 = (1./3.)*pow(-lower_limit,3);
+		double temp_result_1 = constant_neg_cdr*surface_density_upper*(upper_value_1-lower_value_1);
+
+		double middle_limit_2 = x_left_2;
+		double upper_value_2 = (((slope_left*r_h*pow(-middle_limit_2,4))/4.)+(((surface_density_upper-(slope_left*x_left_1))*pow(-middle_limit_2,3))/3.));
+		double lower_value_2 = (((slope_left*r_h*pow(-middle_limit_1,4))/4.)+(((surface_density_upper-(slope_left*x_left_1))*pow(-middle_limit_1,3))/3.));
+		double temp_result_2 = constant_neg_cdr*(upper_value_2-lower_value_2);
+
+		double upper_value_3 = (1./3.)*pow(-upper_limit,3);
+		double lower_value_3 = (1./3.)*pow(-middle_limit_2,3);
+		double temp_result_3 = constant_neg_cdr*surface_density_lower*(upper_value_3-lower_value_3);
+
+		return temp_result_1 + temp_result_2 + temp_result_3;
+	}
+	
+//x_left_1 is to the left of (-2.5*r_h) and x_left_2 is in between (-2.5*r_h) and (-1.8*r_h)
+	else if(lower_limit > x_left_1 && upper_limit > x_left_2)
+	 {
+		double middle_limit = x_left_2;
+		double upper_value_1 = (((slope_left*r_h*pow(-middle_limit,4))/4.)+(((surface_density_upper-(slope_left*x_left_1))*pow(-middle_limit,3))/3.));
+		double lower_value_1 = (((slope_left*r_h*pow(-lower_limit,4))/4.)+(((surface_density_upper-(slope_left*x_left_1))*pow(-lower_limit,3))/3.));
+		double temp_result_1 = constant_neg_cdr*(upper_value_1-lower_value_1);
+
+		double upper_value_2 = (1./3.)*pow(-upper_limit,3);
+		double lower_value_2 = (1./3.)*pow(-middle_limit,3);
+		double temp_result_2 = constant_neg_cdr*surface_density_lower*(upper_value_2-lower_value_2);
+
+		return temp_result_1 + temp_result_2;
+	}
+
+//both x_left_1 and x_left_2 are to the left of (-2.5*r_h)
+	else if(lower_limit > x_left_2)
+	 {
+		double upper_value = (1./3.)*pow(-upper_limit,3);
+		double lower_value = (1./3.)*pow(-lower_limit,3);
+		return constant_neg_cdr*surface_density_lower*(upper_value-lower_value);
+ 	 }	
 }
+
 
 double result_left_3(double x)
 {
-	double lower_limit = -1.*-1.8*r_h;
+	double lower_limit = -1.8*r_h;
 	double upper_limit = 0;
 	double constant_neg_hr = -3.*n_0*r_h*r_h*(r_h/a.)*J_m;
 
-	
+//both x_left_1 and x_left_2 are to the right of (-1.8*r_h)	
+	if(x_left_1 > lower_limit)
+	 {
+		double middle_limit_1 = x_left_1;
+		double upper_value_1 = (1./3.)*pow(middle_limit_1,3);
+		double lower_value_1 = (1./3.)*pow(lower_limit,3);
+		double temp_result_1 = constant_neg_hr*surface_density_upper*(upper_value_1-lower_value_1);
+
+		double middle_limit_2 = x_left_2;
+		double upper_value_2 = (((slope_left*r_h*pow(-middle_limit_2,4))/4.)+(((surface_density_upper-(slope_left*x_left_1))*pow(-middle_limit_2,3))/3.));
+		double lower_value_2 = (((slope_left*r_h*pow(-middle_limit_1,4))/4.)+(((surface_density_upper-(slope_left*x_left_1))*pow(-middle_limit_1,3))/3.));
+		double temp_result_2 = constant_neg_hr*(upper_value_2-lower_value_2);
+
+		double upper_value_3 = (1./3.)*pow(upper_limit,3);
+		double lower_value_3 = (1./3.)*pow(middle_limit_2,3);
+		double temp_result_3 = constant_neg_hr*surface_density_lower*(upper_value_3-lower_value_3);
+
+		return temp_result_1 + temp_result_2 + temp_result_3;
+	 }
+
+//x_left_1 is to the left of (-1.8*r_h) and x_left_2 is to the right of (-1.8*r_h)
+	else if(x_left_2 > lower_limit)
+	 {
+		double middle_limit = x_left_2;
+		double upper_value_1 = (((slope_left*r_h*pow(-middle_limit,4))/4.)+(((surface_density_upper-(slope_left*x_left_1))*pow(-middle_limit,3))/3.));
+		double lower_value_1 = (((slope_left*r_h*pow(-lower_limit,4))/4.)+(((surface_density_upper-(slope_left*x_left_1))*pow(-lower_limit,3))/3.));
+		double temp_result_1 = constant_neg_hr*(upper_value_1-lower_value_1);
+
+		double upper_value_2 = (1./3.)*pow(upper_limit,3);
+		double lower_value_2 = (1./3.)*pow(middle_limit,3);
+		double temp_result_2 = constant_neg_hr*surface_density_lower*(upper_value_2-lower_value_2);
+
+		return temp_result_1 + temp_result_2;
+	 }
+
+//both x_left_1 and x_left_2 are to the left of (-1.8*r_h)	
+	else
+	 {
+		double upper_value = (1./3.)*pow(upper_limit,3);
+		double lower_value = (1./3.)*pow(lower_limit,3);
+		return constant*neg_hr*surface_density_lower*(upper_value-lower_value);
+	 }
+}
+
 
 double torque_function(double x)
 {
