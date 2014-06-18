@@ -220,18 +220,75 @@ bool check(double x, double y)
 
 	total_mass = total_mass_1+total_mass_2+total_mass_3+total_mass_4+total_mass_5;
 
+double result_left_1(double x)
+{
+	double lower_limit = -1.*-boxsize_x/2.;
+	double upper_limit = -1.*-2.5*r_h;
+	double constant_neg_mdr = -3.*n_0*r_h*r_h*((64.*pow(G*moonlet_mass,2.)*a)/(243.*pow(OMEGA,3.)))*(pow(((2.*K_0)+(K_1)),2.));
+	
+	if(upper_limit <= x_left_1)
+	 {
+		double upper_value = ((-1/(3.*pow(upper_limit,3)))-(alpha/(2.*a*pow(upper_limit,2))));
+		double lower_value = ((-1/(3.*pow(lower_limit,3)))-(alpha/(2.*a*pow(lower_limit,2))));
+		return constant_neg_mdr*surface_density_upper*(upper_value - lower_value);
+	 }
+	
+	else
+	 {
+		double middle_limit = -1.*x_left_1;
+		double upper_value_1 = ((-1/(3.*pow(middle_limit,3)))-(alpha/(2.*a*pow(middle_limit,2))));
+		double lower_value_1 = ((-1/(3.*pow(lower_limit,3)))-(alpha/(2.*a*pow(lower_limit,2))));
+		double temp_result_1 = constant_neg_mdr*surface_density_upper*(upper_value_1-lower_value_1);
+
+		double upper_value_2 = (-((slope_left*r_h)/(2.*pow(upper_limit,2)))-((surface_density_upper-(slope_left*x_left_1))/(3.*pow(upper_limit,3)))-((alpha*(slope_left*r_h))/(a*upper_limit))-((alpha*(surface_density_upper-(slope_left*x_left_1)))/(2.*a*pow(upper_limit,2))));
+		double lower_value_2 = (-((slope_left*r_h)/(2.*pow(middle_limit,2)))-((surface_density_upper-(slope_left*x_left_1))/(3.*pow(middle_limit,3)))-((alpha*(slope_left*r_h))/(a*middle_limit))-((alpha*(surface_density_upper-(slope_left*x_left_1)))/(2.*a*pow(middle_limit,2))));
+		double temp_result_2 = constant_neg_mdr*(upper_value_2-lower_value_2);
+
+		return temp_result_1 + temp_result_2;
+	 }
+	
+}
+
+double result_left_2(double x)
+{
+	double lower_limit = -1.*-2.5*r_h;
+	double upper_limit = -1.*-1.8*r_h;
+	double constant_neg_cdr = -3.*n_0*r_h*r_h*(r_h/(2.*a))*J_m;
+	
+	if(upper_limit <= x_left_1)
+	 {
+		double upper_value = (1./3.)*pow(upper_limit,3);
+		double lower_value = (1./3.)*pow(lower_limit,3);
+		return constant_neg_cdr*surface_density_upper*(upper_value-lower_value);
+	 }
+
+	else
+	 {
+		double middle_limit = -1.*x_left_1;
+		double upper_value_1 = (1./3.)*pow(middle_limit,3);
+		double lower_value_1 = (1./3.)*pow(lower_limit,3);
+		double temp_result_1 = constant_neg*cdr*surface_density_upper*(upper_value_1-lower_value_1);
+
+		double upper_value_2 = (((slope_left*r_h*pow(upper_limit,4))/4.)+(((surface_density_upper-(slope_left*x_left_1))*pow(upper_limit,3))/3.));
+		double lower_value_2 = (((slope_left*r_h*pow(middle_limit,4))/4.)+(((surface_density_upper-(slope_left*x_left_1))*pow(middle_limit,3))/3.));
+		double temp_result_2 = constant_neg_cdr*(upper_value_2-lower_value_2);
+
+		return temp_result_1 + temp_result_2;
+	 }
+}
+
+double result_left_3(double x)
+{
+	double lower_limit = -1.*-1.8*r_h;
+	double upper_limit = 0;
+	double constant_neg_hr = -3.*n_0*r_h*r_h*(r_h/a.)*J_m;
+
+	
 
 double torque_function(double x)
 {
-	double constant_mdr = 3*n_0*r_h*r_h*surface_density_upper*((64.*pow(G*moonlet_mass,2.)*a)/(243.*pow(OMEGA,3.)))*(pow(((2.*K_0)+(K_1)),2.));	
-	if(x < (-2.5*r_h) && x < x_left_1 && (-2.5*r_h) <= x_left_1)
-	 {
-		double lower_value = ((-1/(3*pow(2.5*r_h,3.)))-(alpha/(2.*a*pow(2.5*r_h,2.))));
-		double upper_value = ((-1/(3*pow(boxsize_x/2.,3.)))-(alpha/(2.*a*pow(boxsize_x/2.,2.))));
-		return -3.*n_0*r_h*r_h*surface_density_upper*constant_mdr(upper_value-lower_value);
-	 }
+		
 
-	if
 }
 
 
