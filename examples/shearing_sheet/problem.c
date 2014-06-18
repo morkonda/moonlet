@@ -50,30 +50,29 @@ int number_of_particles = 0;
 double a;
 double M_saturn;
 double a_0;
+double r_h;
+double toomre_wavelength;
 double total_mass;
 double total_mass_1;
 double total_mass_2;
 double total_mass_3;
 double total_mass_4;
 double total_mass_5;
+double moonlet_radius;
 extern double minimum_collision_velocity;
 
 extern double (*coefficient_of_restitution_for_velocity)(double); 
 double coefficient_of_restitution_bridges(double v);
 bool check(double x, double y);
-bool check_to_add();
+double toomre_wavelength_function(double x);
+double sigma_function(double x);
+double deltaJ_function(double x);
 extern double opening_angle2;
 
-//bool check_to_add()
-//{
-  //remove("position_moonlet.txt");
-//FILE * fp_temp = fopen("position.txt", "r");
-//}
 
 void problem_init(int argc, char* argv[])
 {
 	remove("position_moonlet.txt");
-	printf("test");
 	//FILE *fp_moonlet;
 	//fp_moonlet = fopen("position_moonlet.txt", "a");
 	//fclose(fp_moonlet);
@@ -89,8 +88,9 @@ void problem_init(int argc, char* argv[])
 	tmax                            = 10.* 2.*M_PI/OMEGA;  
 	G 				= 6.67428e-11;		// N / (1e-5 kg)^2 m^2
 	M_saturn 			= 568.36e24;		// kg
-	a 				= pow(((G*M_saturn)/(OMEGA*OMEGA)),(1/3));		// m
+	a 				= pow(((G*M_saturn)/(OMEGA*OMEGA)),(1./3.));		//m
 	a_0 				= 134912000. ;		// m 
+	moonlet_radius                  = 100.;			// m
 	softening 			= 0.1;			// m
 	dt 				= 1e-3*2.*M_PI/OMEGA;	// s
 #ifdef OPENGL
@@ -103,15 +103,19 @@ void problem_init(int argc, char* argv[])
 	root_nx = 2; root_ny = 2; root_nz = 1;
 	nghostx = 2; nghosty = 2; nghostz = 0; 			// Use two ghost rings
 
-//	double surfacedensity		= 400; 			// kg/m^2
+	double surfacedensity		= 400; 			// kg/m^2
 
 	double particle_density		= 400;			// kg/m^3
-	double particle_radius_min 	= 1;			// m
-	double particle_radius_max 	= 4;			// m
+	//--> double particle_radius_min 	= 1;
+	double particle_radius_min	= 1;			// m
+	//--> double particle_radius_max 	= 4;
+	double particle_radius_max	= 4;			// m
 	double particle_radius_slope 	= -3;	
 	//double increment = input_get_double(argc,argv,"increment",1.1);
 ///	printf("%f\n",input_get_double(argc,argv,"a",123));
-	double increment 		= 1.9;
+	double increment 		= 5.;
+	double moonlet_mass             = particle_density*4./3.*M_PI*moonlet_radius*moonlet_radius*moonlet_radius;
+
 	boxsize 			= 100.*increment;	// m
 ///	if (argc>1){						//Try to read boxsize from command line
 	//	boxsize = atof(argv[1]);
@@ -122,7 +126,7 @@ init_box();
 	
 	// Initial conditions
 
-	//printf("Toomre wavelength: %f\n",2.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*G);
+	//printf("Toomre wavelength: %f m \n",2.*M_PI*M_PI*surfacedensity/OMEGA/OMEGA*G);
 
 	// Use Bridges et al coefficient of restitution.
 	coefficient_of_restitution_for_velocity = coefficient_of_restitution_bridges;
@@ -137,17 +141,22 @@ init_box();
 	double surface_area 			= 0.;
 	double x_left_1		 		= -32.5*increment;
 	double x_left_2				= 0.;
-        //double x_left_2		 	= -28.0*increment;
-	double x_right_1 	 		= 27.5*increment;
-	//double x_right_2	 		= 46.0*increment;
+	//--> double x_right_1 	 		= 27.5*increment;
+	double x_right_1			= 32.5*increment;
 	double x_right_2 			= 0.;
 	double slope_left 			= -1.e100;
 	double slope_right 			= 1.e100;
-	double surface_density_upper 		= 338.;
+	//--> double surface_density_upper 	= 338.;
+	double surface_density_upper		= 338./2.;
 	double surface_density_lower 		= 3.;
-
-	x_left_2 = (1/slope_left)*(surface_density_lower-surface_density_upper+(slope_left*x_left_1));
-	x_right_2 = (1/slope_right)*(surface_density_upper-surface_density_lower+(slope_right*x_right_1));
+	double alpha				= 2.46;
+	double K_0				= 0.69676999;
+	double K_1				= 0.45731925;
+	double n_0				= OMEGA;		// 1/s
+	double J_m				= a*a*n_0;
+	r_h                                     = a*(pow((moonlet_mass/M_saturn),(1./3.)));
+	x_left_2 				= (1/slope_left)*(surface_density_lower-surface_density_upper+(slope_left*x_left_1));
+	x_right_2 				= (1/slope_right)*(surface_density_upper-surface_density_lower+(slope_right*x_right_1));
 
 	FILE *fp;
 	fp = fopen("position_x.txt", "w");
@@ -155,7 +164,8 @@ init_box();
 
 	fprintf(fp, "%f \t %f \t %f \t %f \t %f \t %f \t %f \t %f \n", x_left_1, x_left_2, x_right_1, x_right_2, surface_density_lower, surface_density_upper, slope_left, slope_right);
 
-////
+	printf("Hill radius of the moonlet = %e m \n",r_h);
+
 bool check(double x, double y)
 {
         if(x < x_left_1)
@@ -211,6 +221,100 @@ bool check(double x, double y)
 	total_mass = total_mass_1+total_mass_2+total_mass_3+total_mass_4+total_mass_5;
 
 
+double torque_function(double x)
+{
+	double constant_mdr = 3*n_0*r_h*r_h*surface_density_upper*((64.*pow(G*moonlet_mass,2.)*a)/(243.*pow(OMEGA,3.)))*(pow(((2.*K_0)+(K_1)),2.));	
+	if(x < (-2.5*r_h) && x < x_left_1 && (-2.5*r_h) <= x_left_1)
+	 {
+		double lower_value = ((-1/(3*pow(2.5*r_h,3.)))-(alpha/(2.*a*pow(2.5*r_h,2.))));
+		double upper_value = ((-1/(3*pow(boxsize_x/2.,3.)))-(alpha/(2.*a*pow(boxsize_x/2.,2.))));
+		return -3.*n_0*r_h*r_h*surface_density_upper*constant_mdr(upper_value-lower_value);
+	 }
+
+	if
+}
+
+
+double sigma_function(double x)
+{
+	if(x < x_left_1)
+	 {
+		return surface_density_upper;
+	 }
+	
+	if(x >= x_left_1 && x < x_left_2)
+	 {
+		return ((slope_left*x)+(surface_density_upper)-(slope_left*x_left_1));
+	 }
+
+	if(x >= x_left_2 && x < x_right_1)
+	 {
+		return surface_density_lower;
+	 }
+
+	if(x >= x_right_1 && x < x_right_2)
+	 {
+		return ((slope_right*x)+(surface_density_lower)-(slope_right*x_right_1));
+	 }
+	
+	if(x >= x_right_2)
+	 {
+		return surface_density_upper;
+	 }
+}
+
+
+double deltaJ_function(double x)
+{
+	double temp_b = x/r_h;
+
+	//negative Moderate Deflection Region	
+	if(temp_b < -2.5)
+	 {
+		double temp_constant = (64.*(pow(G*moonlet_mass,2.))*a)/(243.*pow(OMEGA,3.)*pow(fabs(temp_b),5.));
+		double temp_value    = (pow(((2.*K_0)+K_1),2.))*(1.+(alpha*(fabs(temp_b)/a)));
+		return -temp_constant*temp_value;
+	 }
+	
+	//negative Chaotic Deflection Region
+	if(temp_b >= -2.5 && temp_b < -1.8)
+	 {
+		return -(fabs(temp_b)*r_h*J_m)/(2.*a);
+	 }
+
+	//negative Horseshoe Region
+	if(temp_b >= -1.8 && temp_b < 0)
+	 {
+		return -(fabs(temp_b)*r_h*J_m)/a;
+	 }
+
+	//positive Horseshoe Region
+	if(temp_b >= 0 && temp_b < 1.8)
+	 {
+		return (temp_b*r_h*J_m)/a;
+	 }
+	
+	//positive Chaotic Deflection Region
+	if(temp_b >= 1.8 && temp_b < 2.5)
+	 {
+		return (temp_b*r_h*J_m)/(2.*a);
+	 }
+
+	//positive Moderate Deflection Region
+	if(temp_b >= 2.5)
+	 {
+		double temp_constant = (64.*(pow((G*moonlet_mass),2.))*a)/(243.*pow(OMEGA,3.)*pow(temp_b,5.));
+		double temp_value    = (pow(((2.*K_0)+K_1),2.))*(1.+(alpha*(temp_b/a)));
+		return temp_constant*temp_value;
+	 }
+}
+
+
+double toomre_wavelength_function(double x)
+{
+        return (2.*M_PI*M_PI*(sigma_function(x))/OMEGA/OMEGA*G);
+}
+
      while(mass<total_mass)
 {
 	temp_x = tools_uniform(-boxsize_x/2.,boxsize_x/2.);
@@ -238,30 +342,29 @@ bool check(double x, double y)
         	mass += particle_mass;
 		number_of_particles++;
 		number_density 		= total_mass/(particle_mass*surface_area);
-		fprintf(fp, "%f \t %f \t %f \n", pt.x, temp_sigma, number_density);
+		toomre_wavelength 	= toomre_wavelength_function(pt.x);
+		fprintf(fp, "%f \t %f \t %f \t %f \n", pt.x, temp_sigma, number_density, toomre_wavelength);
 		
 	 }
 }
+
 	struct particle pt;
 	pt.x				= 0;
 	//pt.x 				= (1./3.)*(x_left_1);
 	pt.y				= tools_normal(1.);
 	pt.z				= tools_normal(1.);
 	pt.vx				= 0;
- 	pt.vy				= -1.5*pt.x*OMEGA;
+	pt.vy				= -1.5*pt.x*OMEGA;
 	pt.vz				= 0;
 	pt.ax				= 0;
 	pt.ay				= 0;
 	pt.az				= 0;
-	double radius 			= 100.;
-	pt.r 				= radius;
-	double particle_mass 		= particle_density*4./3.*M_PI*radius*radius*radius;
-	pt.m				= particle_mass;
+	pt.r 				= moonlet_radius;
+	pt.m				= moonlet_mass;
 	particles_add(pt);
 	number_of_particles++;
 
 	fclose(fp);
-
 }                
                  
 double coefficient_of_restitution_bridges(double v)
@@ -284,20 +387,21 @@ void problem_output()
 		output_timing();
 		//output_append_velocity_dispersion("veldisp.txt");
 	}
-	if (output_check(2.*M_PI/OMEGA))
+	if (output_check((2.*M_PI/OMEGA)/10.))
 	{
 		char fp_position_data[1024];
-		sprintf(fp_position_data,"position_%2.1f.txt",t/(2.*M_PI/OMEGA));
+		sprintf(fp_position_data,"Data/position_%2.1f.txt",t/(2.*M_PI/OMEGA));
 		output_ascii(fp_position_data);
 
 	}
 
 	if (output_check(2.*M_PI/OMEGA))
+	//if(0)
 	{
 		FILE* fp_moonlet_data = fopen("position_moonlet.txt","a+");
 		for(int i=0;i<number_of_particles;i++)
 		 {
-			if (particles[i].r == 100.)
+			if (particles[i].r == moonlet_radius)
 		         { 
 		     		struct particle ml = particles[i];
 				fprintf(fp_moonlet_data,"%e\t%e\t%e\t%e\t%e\t%e\n", ml.x, ml.y, ml.z, ml.vx, ml.vy, ml.vz);
