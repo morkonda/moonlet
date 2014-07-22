@@ -169,6 +169,7 @@ init_box();
 	//double slope_right			= 0.0205;
 	//--> double surface_density_upper 	= 338.;
 	double surface_density_upper		= 338.;
+	//double surface_density_lower		= 300.;
 	double surface_density_lower	 	= 338.;
 	double alpha				= 2.46;
 	double K_0				= 0.69676999;
@@ -194,7 +195,7 @@ init_box();
 	a_0					= pow(((G*(M_saturn+moonlet_mass))/(OMEGA*OMEGA)),(1./3.));
 	//moonlet_x 				= 0.;						// m
 	//moonlet_x				= (1./10.)*x_right_1;				// m 
-	moonlet_x				= -300.;						// m
+	moonlet_x				= -300.;					// m
 	a				        = a_0 + moonlet_x;                              // m		//Actual semi-major axis
 	J_m 					= a_0*a_0*n_0;
 	r_h                                     = a_0*(pow((moonlet_mass/(3.*M_saturn)),(1./3.)));
@@ -223,7 +224,8 @@ bool check(double x, double y)
                  }
          }
 
-        if(x >= x_left_1 && x < x_left_2)
+        
+if(x >= x_left_1 && x < x_left_2)
          {
                 if(y <= ((slope_left*x)+(surface_density_upper)-(slope_left*x_left_1)))
                  {
@@ -282,14 +284,17 @@ double sigma_right(double x)
 //function that returns the value of b for a given x value
 double check_limit_sign(double check_limit)
 {
-	return fabs(check_limit - moonlet_x)/r_h;
+	if(check_limit <= 0.)
+	 {
+		return -(fabs(check_limit));
+	 }
+	else if(check_limit > 0.)
+	 {
+		return (fabs(check_limit));
+	 }
 }
 
-double check_limit_sign_mdr(double check_limit)
-{
-	return (check_limit - moonlet_x);
-}
- 
+
 double result_left_1()
 {
 	double lower_limit = -boxsize_x/2.;
@@ -299,21 +304,17 @@ double result_left_1()
 	double integral_left_1_for_constant_sigma(double integral_lower_limit, double integral_upper_limit, double integral_sigma)
 	 {
 
-		double lower_limit_local = check_limit_sign_mdr(integral_lower_limit);
-		double upper_limit_local = check_limit_sign_mdr(integral_upper_limit);
-		double integral_lower_value;		
+		double lower_limit_local = check_limit_sign(integral_lower_limit);
+		double upper_limit_local = check_limit_sign(integral_upper_limit);
+
+		double integral_lower_value = ((1./(3.*pow(lower_limit_local,3.)))-(alpha/(2.*a*pow(lower_limit_local,2.))));	
+		double integral_upper_value = ((1./(3.*pow(upper_limit_local,3.)))-(alpha/(2.*a*pow(upper_limit_local,2.))));
 
 		if(integral_lower_limit == lower_limit)
 		 {
 			integral_lower_value = 0.;
 		 }
 
-		else
-		 {
-			integral_lower_value = ((1./(3.*pow(lower_limit_local,3.)))-(alpha/(2.*a*pow(lower_limit_local,2.))));
-		 }
-		
-		double integral_upper_value = ((1./(3.*pow(upper_limit_local,3.)))-(alpha/(2.*a*pow(upper_limit_local,2.))));
 		double temp_result = (1./(r_h*r_h))*constant_neg_mdr*integral_sigma*(integral_upper_value-integral_lower_value);
 
 		//printf("int_upper_value = %f\n", integral_upper_value);
@@ -327,21 +328,17 @@ double result_left_1()
 	double integral_left_1_for_function_sigma(double integral_lower_limit, double integral_upper_limit)
 	 {
 		//printf("-------------------------->Check\n");
-		double lower_limit_local = check_limit_sign_mdr(integral_lower_limit);
-		double upper_limit_local = check_limit_sign_mdr(integral_upper_limit);	
-		double integral_lower_value;
+		double lower_limit_local = check_limit_sign(integral_lower_limit);
+		double upper_limit_local = check_limit_sign(integral_upper_limit);	
+
+		double integral_lower_value = (+((slope_left)/(2.*pow(lower_limit_local,2.)))+((-(slope_left*x_left_1)+surface_density_upper+(slope_left*moonlet_x))/(3.*pow(lower_limit_local,3.)))-((alpha*slope_left)/(a*lower_limit_local))-((alpha*(-(slope_left*x_left_1)+surface_density_upper+(slope_left*moonlet_x)))/(2.*a*pow(lower_limit_local,2.))));
+		double integral_upper_value = (+((slope_left)/(2.*pow(upper_limit_local,2.)))+((-(slope_left*x_left_1)+surface_density_upper+(slope_left*moonlet_x))/(3.*pow(upper_limit_local,3.)))-((alpha*slope_left)/(a*upper_limit_local))-((alpha*(-(slope_left*x_left_1)+surface_density_upper+(slope_left*moonlet_x)))/(2.*a*pow(upper_limit_local,2.))));
 
 		if(integral_lower_limit == lower_limit)
 		 {
 			integral_lower_value = 0.;
-		 }
+		 }		
 
-		else
-		 {
-			integral_lower_value = (+((slope_left)/(2.*pow(lower_limit_local,2.)))+((-(slope_left*x_left_1)+surface_density_upper)/(3.*pow(lower_limit_local,3.)))-((alpha*slope_left)/(a*lower_limit_local))-((alpha*(-(slope_left*x_left_1)+surface_density_upper))/(2.*a*pow(lower_limit_local,2.))));
-		 }
-
-		double integral_upper_value = (+((slope_left)/(2.*pow(upper_limit_local,2.)))+((-(slope_left*x_left_1)+surface_density_upper)/(3.*pow(upper_limit_local,3.)))-((alpha*slope_left)/(a*upper_limit_local))-((alpha*(-(slope_left*x_left_1)+surface_density_upper))/(2.*a*pow(upper_limit_local,2.))));
 		double temp_result = (1./(r_h*r_h))*constant_neg_mdr*(integral_upper_value-integral_lower_value);
 
 		return temp_result;
@@ -372,9 +369,9 @@ double result_left_1()
 		double temp_result_2 = integral_left_1_for_function_sigma(x_left_1, x_left_2);
 		double temp_result_3 = integral_left_1_for_constant_sigma(x_left_2, upper_limit, surface_density_lower);
 
-		printf("Temp_result_1_left = %f\n", temp_result_1);
-		printf("Temp_result_2_left = %f\n", temp_result_2);
-		printf("Temp_result_3_left = %f\n", temp_result_3);
+		//printf("Temp_result_1_left = %f\n", temp_result_1);
+		//printf("Temp_result_2_left = %f\n", temp_result_2);
+		//printf("Temp_result_3_left = %f\n", temp_result_3);
 
 		return temp_result_1 + temp_result_2 + temp_result_3;
 	 }
@@ -403,7 +400,7 @@ double result_left_2()
 
 		double integral_upper_value = -(1./3.)*pow(upper_limit_local,3.);
 		double integral_lower_value = -(1./3.)*pow(lower_limit_local,3.);
-		double temp_result = constant_neg_cdr*integral_sigma*(integral_upper_value - integral_lower_value);
+		double temp_result = (1./(r_h*r_h*r_h))*constant_neg_cdr*integral_sigma*(integral_upper_value - integral_lower_value);
 	
 		//printf("result_left_2_const = %f\n", temp_result);		
 
@@ -418,21 +415,23 @@ double result_left_2()
 		//printf("Left Function: lower_limit, upper_limit = %16.16f\t%16.16f\n", lower_limit_local, upper_limit_local);
 		//printf("Function sigma: left_lower_limit, left_upper_limit = %f\t%f\n", lower_limit_local, upper_limit_local);
 		
-		double integral_upper_value = -(((slope_left*r_h*pow(upper_limit_local,4.))/4.)+(((-(slope_left*x_left_1)+surface_density_upper)*pow(upper_limit_local,3.))/3.));
-		double integral_lower_value = -(((slope_left*r_h*pow(lower_limit_local,4.))/4.)+(((-(slope_left*x_left_1)+surface_density_upper)*pow(lower_limit_local,3.))/3.));
-		double temp_result = constant_neg_cdr*(integral_upper_value - integral_lower_value);
+		double integral_upper_value = -(((slope_left*pow(upper_limit_local,4.))/4.)+(((-(slope_left*x_left_1)+surface_density_upper+(slope_left*moonlet_x))*pow(upper_limit_local,3.))/3.));
+		double integral_lower_value = -(((slope_left*pow(lower_limit_local,4.))/4.)+(((-(slope_left*x_left_1)+surface_density_upper+(slope_left*moonlet_x))*pow(lower_limit_local,3.))/3.));
+		double temp_result = (1./(r_h*r_h*r_h))*constant_neg_cdr*(integral_upper_value - integral_lower_value);
 		return temp_result;
 	 }
 
 //x_left_1 is to the right of (-1.8*r_h)
 	if(upper_limit <= x_left_1)
 	 {
+		//printf("CHECK_LEFT_1\n");
 		return integral_left_2_for_constant_sigma(lower_limit, upper_limit, surface_density_upper);
 	 }
 
 //x_left_1 is in between (-2.5*r_h) & (-1.8*r_h) and x_left_2 is to the right of (1.8*r_h)
 	else if(lower_limit < x_left_1 && upper_limit > x_left_1 && upper_limit < x_left_2)
 	 {
+		//printf("CHECK_LEFT_2\n");
 		double temp_result_1 = integral_left_2_for_constant_sigma(lower_limit, x_left_1, surface_density_upper);
 		double temp_result_2 = integral_left_2_for_function_sigma(x_left_1, upper_limit);
 		return temp_result_1 + temp_result_2;
@@ -441,6 +440,7 @@ double result_left_2()
 //x_left_1 and x_left_2 are in between (-2.5*r_h) and (-1.8*r_h)
 	else if(lower_limit < x_left_1 && upper_limit > x_left_2)
 	 {
+		//printf("CHECK_LEFT_3\n");
 		double temp_result_1 = integral_left_2_for_constant_sigma(lower_limit, x_left_1, surface_density_upper);
 		double temp_result_2 = integral_left_2_for_function_sigma(x_left_1, x_left_2);
 		double temp_result_3 = integral_left_2_for_constant_sigma(x_left_2, upper_limit, surface_density_lower);
@@ -450,20 +450,27 @@ double result_left_2()
 //x_left_1 is to the left of (-2.5*r_h) and x_left_2 is in between (-2.5*r_h) & (-1.8*r_h)
 	else if(lower_limit > x_left_1 && lower_limit < x_left_2 && upper_limit > x_left_2)
 	 {
+		//printf("CHECK_LEFT_4\n");
 		double temp_result_1 = integral_left_2_for_function_sigma(lower_limit, x_left_2);
-		double temp_result_2 = integral_left_2_for_constant_sigma(x_left_2, upper_limit, surface_density_lower);		
+		double temp_result_2 = integral_left_2_for_constant_sigma(x_left_2, upper_limit, surface_density_lower);
+
+		//printf("Integral_function_left = %f\n", temp_result_1);
+		//printf("Integral_constant_left = %f\n", temp_result_2);		
+		
 		return temp_result_1 + temp_result_2;
 	 }
 
 //both x_left_1 and x_left_2 are to the left of (-2.5*r_h)
 	else if(lower_limit > x_left_2)
 	 {
+		//printf("CHECK_LEFT_5\n");
 		return integral_left_2_for_constant_sigma(lower_limit, upper_limit, surface_density_lower);
  	 }
 
 //x_left_1 is to the left of (-2.5*r_h) and x_left_2 is to the right of (-1.8*r_h)
 	else if(lower_limit > x_left_1 && upper_limit < x_left_2)
 	 {
+		//printf("CHECK_LEFT_6\n");
 		return integral_left_2_for_function_sigma(lower_limit, upper_limit);
 	 }
 
@@ -489,7 +496,11 @@ double result_left_3()
 
 		double integral_upper_value = -(1./3.)*pow(upper_limit_local,3.);
 		double integral_lower_value = -(1./3.)*pow(lower_limit_local,3.);
-		double temp_result = constant_neg_hr*integral_sigma*(integral_upper_value - integral_lower_value);	
+
+		//printf("Left_lower_limit = %f\n", lower_limit_local);
+		//printf("Left_upper_limit = %f\n", upper_limit_local);
+
+		double temp_result = (1./(r_h*r_h*r_h))*constant_neg_hr*integral_sigma*(integral_upper_value - integral_lower_value);	
 		return temp_result; 
 	 }
 	
@@ -498,9 +509,9 @@ double result_left_3()
 		double lower_limit_local = check_limit_sign(integral_lower_limit);
 		double upper_limit_local = check_limit_sign(integral_upper_limit);
 
-		double integral_upper_value = -(((slope_left*r_h*pow(upper_limit_local,4.))/4.)+(((-(slope_left*x_left_1)+surface_density_upper)*pow(upper_limit_local,3.))/3.));
-		double integral_lower_value = -(((slope_left*r_h*pow(lower_limit_local,4.))/4.)+(((-(slope_left*x_left_1)+surface_density_upper)*pow(lower_limit_local,3.))/3.));
-		double temp_result = constant_neg_hr*(integral_upper_value - integral_lower_value);
+		double integral_upper_value = -(((slope_left*pow(upper_limit_local,4.))/4.)+(((-(slope_left*x_left_1)+surface_density_upper+(slope_left*moonlet_x))*pow(upper_limit_local,3.))/3.));
+		double integral_lower_value = -(((slope_left*pow(lower_limit_local,4.))/4.)+(((-(slope_left*x_left_1)+surface_density_upper+(slope_left*moonlet_x))*pow(lower_limit_local,3.))/3.));
+		double temp_result = (1./(r_h*r_h*r_h))*constant_neg_hr*(integral_upper_value - integral_lower_value);
 		
 		//printf("result_left_function = %f\n", temp_result);
 	
@@ -510,6 +521,7 @@ double result_left_3()
 //both x_left_1 and x_left_2 are to the right of (-1.8*r_h)	
 	if(x_left_1 > lower_limit)
 	 {
+		printf("---------------Check_3\n");
 		double temp_result_1 = integral_left_3_for_constant_sigma(lower_limit, x_left_1, surface_density_upper);		
 		double temp_result_2 = integral_left_3_for_function_sigma(x_left_1, x_left_2);
 		double temp_result_3 = integral_left_3_for_constant_sigma(x_left_2, upper_limit, surface_density_lower);
@@ -519,6 +531,7 @@ double result_left_3()
 //x_left_1 is to the left of (-1.8*r_h) and x_left_2 is to the right of (-1.8*r_h)
 	else if(x_left_1 < lower_limit && x_left_2 > lower_limit)
 	 {
+		printf("---------------Check_2\n");
 		double temp_result_1 = integral_left_3_for_function_sigma(lower_limit, x_left_2);		
 		double temp_result_2 = integral_left_3_for_constant_sigma(x_left_2, upper_limit, surface_density_lower);
 		return temp_result_1 + temp_result_2;
@@ -527,7 +540,16 @@ double result_left_3()
 //both x_left_1 and x_left_2 are to the left of (-1.8*r_h)	
 	else if(x_left_2 < lower_limit)
 	 {
-		return integral_left_3_for_constant_sigma(lower_limit, upper_limit, surface_density_lower);
+		//printf("---------------Check_1\n");
+
+		double temp_result = integral_left_3_for_constant_sigma(lower_limit, upper_limit, surface_density_lower);
+		return temp_result;
+		
+		//double temp_1 = -(1./(r_h*r_h*r_h))*(constant_neg_hr*surface_density_lower)*(1./3.)*pow(-300.-(-2625.993411),3.);
+		//double temp_2 = -(1./(r_h*r_h*r_h))*(constant_neg_hr*surface_density_lower)*(1./3.)*pow(0.-(-300.),3.);
+		//return temp_1-temp_2;
+
+		//printf("Left_result = %f\n", temp_result);			
 	 }
 
 //none of the above is true
@@ -553,7 +575,11 @@ double result_right_1()
 
 		double integral_upper_value = (1./3.)*pow(upper_limit_local,3.);
 		double integral_lower_value = (1./3.)*pow(lower_limit_local,3.);
-		double temp_result = constant_pos_hr*integral_sigma*(integral_upper_value - integral_lower_value);
+
+		//printf("Right_lower_limit = %f\n", lower_limit_local);
+		//printf("Right_upper_limit = %f\n", upper_limit_local);
+
+		double temp_result = (1./(r_h*r_h*r_h))*constant_pos_hr*integral_sigma*(integral_upper_value - integral_lower_value);
 		return temp_result; 
 	 }
 
@@ -562,9 +588,9 @@ double result_right_1()
 		double lower_limit_local = check_limit_sign(integral_lower_limit);
 		double upper_limit_local = check_limit_sign(integral_upper_limit);
 
-		double integral_upper_value = (((slope_right*r_h*pow(upper_limit_local,4.))/4.)+(((-(slope_right*x_right_1)+surface_density_lower)*pow(upper_limit_local,3.))/3.));
-		double integral_lower_value = (((slope_right*r_h*pow(lower_limit_local,4.))/4.)+(((-(slope_right*x_right_1)+surface_density_lower)*pow(lower_limit_local,3.))/3.));
-		double temp_result = constant_pos_hr*(integral_upper_value - integral_lower_value);
+		double integral_upper_value = (((slope_right*pow(upper_limit_local,4.))/4.)+(((-(slope_right*x_right_1)+surface_density_lower+(slope_right*moonlet_x))*pow(upper_limit_local,3.))/3.));
+		double integral_lower_value = (((slope_right*pow(lower_limit_local,4.))/4.)+(((-(slope_right*x_right_1)+surface_density_lower+(slope_right*moonlet_x))*pow(lower_limit_local,3.))/3.));
+		double temp_result = (1./(r_h*r_h*r_h))*constant_pos_hr*(integral_upper_value - integral_lower_value);
 	
 		//printf("result_right_function = %f\n", temp_result);
 
@@ -574,12 +600,22 @@ double result_right_1()
 //x_right_1 is to the right of (1.8*r_h)
 	if(x_right_1 > upper_limit)
 	 {
-		return integral_right_1_for_constant_sigma(lower_limit, upper_limit, surface_density_lower);
+		//printf("Check_1------------\n");
+
+		double temp_result = integral_right_1_for_constant_sigma(lower_limit, upper_limit, surface_density_lower);
+		
+		//double temp_1 = (1./(r_h*r_h*r_h))*(constant_pos_hr*surface_density_lower)*(1./3.)*pow(300.-0.,3.);
+		//double temp_2 = integral_right_1_for_constant_sigma(lower_limit, upper_limit, surface_density_lower);
+		//return temp_1 + temp_2;
+
+		//printf("Right_result = %f\n", temp_result);
+		return temp_result;
 	 }
 
 //x_right_1 is to the left of (1.8*r_h) and x_right_2 is to the right of (1.8*r_h)
 	else if(x_right_1 < upper_limit && x_right_2 > upper_limit)
 	 {
+		printf("Check_2------------\n");
 		double temp_result_1 = integral_right_1_for_constant_sigma(lower_limit, x_right_1, surface_density_lower);
 		double temp_result_2 = integral_right_1_for_function_sigma(x_right_1, upper_limit);
 		return temp_result_1 + temp_result_2;
@@ -588,6 +624,7 @@ double result_right_1()
 //both x_right_1 and x_rigth_2 are to the left of (1.8*r_h)
 	else if(x_right_2 < upper_limit)
 	 {
+		printf("Check_3------------\n");
 		double temp_result_1 = integral_right_1_for_constant_sigma(lower_limit, x_right_1, surface_density_lower);
 		double temp_result_2 = integral_right_1_for_function_sigma(x_right_1, x_right_2);
 		double temp_result_3 = integral_right_1_for_constant_sigma(x_right_2, upper_limit, surface_density_upper);
@@ -619,7 +656,7 @@ double result_right_2()
 
 		double integral_upper_value = (1./3.)*pow(upper_limit_local,3.);
 		double integral_lower_value = (1./3.)*pow(lower_limit_local,3.);
-		double temp_result = constant_pos_cdr*integral_sigma*(integral_upper_value - integral_lower_value);
+		double temp_result = (1./(r_h*r_h*r_h))*constant_pos_cdr*integral_sigma*(integral_upper_value - integral_lower_value);
 		
 		//printf("result_right_2_const = %f\n", temp_result);
 	
@@ -634,29 +671,36 @@ double result_right_2()
 		//printf("Right function: lower_limit, upper_limit = %16.16f\t%16.16f\n", lower_limit_local, upper_limit_local);
 		//printf("Function sigma: right_lower_limit, right_upper_limit = %f\t%f\n", lower_limit_local, upper_limit_local);
 
-		double integral_upper_value = (((slope_right*r_h*pow(upper_limit_local,4.))/4.)+(((-(slope_right*x_right_1)+surface_density_lower)*pow(upper_limit_local,3.))/3.));
-		double integral_lower_value = (((slope_right*r_h*pow(lower_limit_local,4.))/4.)+(((-(slope_right*x_right_1)+surface_density_lower)*pow(lower_limit_local,3.))/3.));
-		double temp_result = constant_pos_cdr*(integral_upper_value - integral_lower_value);
+		double integral_upper_value = (((slope_right*pow(upper_limit_local,4.))/4.)+(((-(slope_right*x_right_1)+surface_density_lower+(slope_right*moonlet_x))*pow(upper_limit_local,3.))/3.));
+		double integral_lower_value = (((slope_right*pow(lower_limit_local,4.))/4.)+(((-(slope_right*x_right_1)+surface_density_lower+(slope_right*moonlet_x))*pow(lower_limit_local,3.))/3.));
+		double temp_result = (1./(r_h*r_h*r_h))*constant_pos_cdr*(integral_upper_value - integral_lower_value);
 		return temp_result;
 	 }
 
 //both x_right_1 and x_right_2 are to the right of (2.5*r_h)
 	if(x_right_1 > upper_limit)
 	 {
+		printf("CHECK_RIGHT_1\n");
 		return integral_right_2_for_constant_sigma(lower_limit, upper_limit, surface_density_lower);
 	 }
 
 //x_right_1 is in between (1.8*r_h) & (2.5*r_h) and x_right_2 is to the right of (2.5*r_h)
 	else if(x_right_1 > lower_limit && x_right_1 < upper_limit && x_right_2 > upper_limit)
 	 {
+		//printf("CHECK_RIGHT_2\n");
 		double temp_result_1 = integral_right_2_for_constant_sigma(lower_limit, x_right_1, surface_density_lower);
 		double temp_result_2 = integral_right_2_for_function_sigma(x_right_1, upper_limit);
+
+		//printf("Integral_constant_right = %f\n", temp_result_1);
+		//printf("Integral_function_right = %f\n", temp_result_2);
+
 		return temp_result_1 + temp_result_2;
 	 }
 
 //both x_right_1 and x_right_2 are in between (1.8*r_h) & (2.5*r_h)
 	else if(x_right_1 > lower_limit && x_right_2 < upper_limit)
 	 {
+		printf("CHECK_RIGHT_3\n");
 		double temp_result_1 = integral_right_2_for_constant_sigma(lower_limit, x_right_1, surface_density_lower);
 		double temp_result_2 = integral_right_2_for_function_sigma(x_right_1, x_right_2);
 		double temp_result_3 = integral_right_2_for_constant_sigma(x_right_2, upper_limit, surface_density_upper);
@@ -666,6 +710,7 @@ double result_right_2()
 //x_right_1 is to the left of (1.8*r_h) and x_right_2 is in between (1.8*r_h) & (2.5*r_h)
 	else if(x_right_1 < lower_limit && x_right_2 > lower_limit && x_right_2 < upper_limit)
 	 {
+		printf("CHECK_RIGHT_4\n");
 		double temp_result_1 = integral_right_2_for_function_sigma(lower_limit, x_right_2);
 		double temp_result_2 = integral_right_2_for_constant_sigma(x_right_2, upper_limit, surface_density_upper);
 		return temp_result_1 + temp_result_2;
@@ -673,12 +718,14 @@ double result_right_2()
 //both x_right_1 and x_right_2 are to the left of (1.8*r_h)
 	else if(x_right_2 < lower_limit)
 	 {
+		printf("CHECK_RIGHT_5\n");
 		return integral_right_2_for_constant_sigma(lower_limit, upper_limit, surface_density_upper);
 	 }
 
 //x_right_1 is to the left of (1.8*r_h) and x_right_2 is to the right of (2.5*r_h)
 	else if(x_right_1 < lower_limit && x_right_2 > upper_limit)
 	 {
+		printf("CHECK_RIGHT_6\n");
 		return integral_right_2_for_function_sigma(lower_limit, upper_limit);
 	 }
 
@@ -699,8 +746,8 @@ double result_right_3()
 
 	double integral_right_3_for_constant_sigma(double integral_lower_limit, double integral_upper_limit, double integral_sigma)
 	 {
-		double lower_limit_local = check_limit_sign_mdr(integral_lower_limit);
-		double upper_limit_local = check_limit_sign_mdr(integral_upper_limit);
+		double lower_limit_local = check_limit_sign(integral_lower_limit);
+		double upper_limit_local = check_limit_sign(integral_upper_limit);
 
 		double integral_lower_value = (-(1./(3.*pow(lower_limit_local,3.)))-(alpha/(2.*a*pow(lower_limit_local,2.))));
 		double integral_upper_value = (-(1./(3.*pow(upper_limit_local,3.)))-(alpha/(2.*a*pow(upper_limit_local,2.))));
@@ -716,11 +763,11 @@ double result_right_3()
 
 	double integral_right_3_for_function_sigma(double integral_lower_limit, double integral_upper_limit)
 	 {
-		double lower_limit_local = check_limit_sign_mdr(integral_lower_limit);
-		double upper_limit_local = check_limit_sign_mdr(integral_upper_limit);	
+		double lower_limit_local = check_limit_sign(integral_lower_limit);
+		double upper_limit_local = check_limit_sign(integral_upper_limit);	
 
-		double integral_lower_value = (-((slope_right)/(2.*pow(lower_limit_local,2.)))-((-(slope_right*x_right_1)+surface_density_lower)/(3.*pow(lower_limit_local,3.)))-((alpha*slope_right)/(a*lower_limit_local))-((alpha*(-(slope_right*x_right_1)+surface_density_lower))/(2.*a*pow(lower_limit_local,2.))));
-		double integral_upper_value = (-((slope_right)/(2.*pow(upper_limit_local,2.)))-((-(slope_right*x_right_1)+surface_density_lower)/(3.*pow(upper_limit_local,3.)))-((alpha*slope_right)/(a*upper_limit_local))-((alpha*(-(slope_right*x_right_1)+surface_density_lower))/(2.*a*pow(upper_limit_local,2.))));
+		double integral_lower_value = (-((slope_right)/(2.*pow(lower_limit_local,2.)))-((-(slope_right*x_right_1)+surface_density_lower+(slope_right*moonlet_x))/(3.*pow(lower_limit_local,3.)))-((alpha*slope_right)/(a*lower_limit_local))-((alpha*(-(slope_right*x_right_1)+surface_density_lower+(slope_right*moonlet_x)))/(2.*a*pow(lower_limit_local,2.))));
+		double integral_upper_value = (-((slope_right)/(2.*pow(upper_limit_local,2.)))-((-(slope_right*x_right_1)+surface_density_lower+(slope_right*moonlet_x))/(3.*pow(upper_limit_local,3.)))-((alpha*slope_right)/(a*upper_limit_local))-((alpha*(-(slope_right*x_right_1)+surface_density_lower+(slope_right*moonlet_x)))/(2.*a*pow(upper_limit_local,2.))));
 
 		if(integral_upper_limit == upper_limit)
 		 {
@@ -774,16 +821,22 @@ double result_right_3()
 
 double torque_function()
 {
-	double result_torque_left = fabs(result_left_1()) - fabs(result_left_2()) - fabs(result_left_3());
-	double result_torque_right = fabs(result_right_1()) + fabs(result_right_2()) - fabs(result_right_3());
+	double temp_result_left_1 = fabs(result_left_1());
+	double temp_result_left_2 = -fabs(result_left_2());
+	double temp_result_left_3 = -fabs(result_left_3());
+	double result_torque_left = temp_result_left_1 + temp_result_left_2 + temp_result_left_3;
+	double temp_result_right_1 = fabs(result_right_1());
+	double temp_result_right_2 = fabs(result_right_2());
+	double temp_result_right_3 = -fabs(result_right_3());
+	double result_torque_right = temp_result_right_1 + temp_result_right_2 + temp_result_right_3;
 	double result_torque = result_torque_left + result_torque_right;	
 
-	printf("Torque_1 = %16.16e Nm \n", fabs(result_left_1()));
-	printf("Torque_2 = %16.16e Nm \n", -fabs(result_left_2()));
-	printf("Torque_3 = %16.16e Nm \n", -fabs(result_left_3()));
-	printf("Torque_4 = %16.16e Nm \n", fabs(result_right_1()));
-	printf("Torque_5 = %16.16e Nm \n", fabs(result_right_2()));
-	printf("Torque_6 = %16.16e Nm \n", -fabs(result_right_3()));
+	printf("Torque_1 = %16.16e Nm \n", temp_result_left_1);
+	printf("Torque_2 = %16.16e Nm \n", temp_result_left_2);
+	printf("Torque_3 = %16.16e Nm \n", temp_result_left_3);
+	printf("Torque_4 = %16.16e Nm \n", temp_result_right_1);
+	printf("Torque_5 = %16.16e Nm \n", temp_result_right_2);
+	printf("Torque_6 = %16.16e Nm \n", temp_result_right_3);
 	printf("Torque (-ve x) = %16.16e Nm\n", result_torque_left);
 	printf("Torque (+ve x) = %16.16e Nm\n", result_torque_right);
 	return result_torque;		
